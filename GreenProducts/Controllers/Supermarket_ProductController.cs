@@ -25,7 +25,7 @@ namespace GreenProducts.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Supermarket_Product>>> GetSupermarket_Products()
         {
-            return await _context.Supermarket_Products.ToListAsync();
+            return await _context.Supermarket_Products.Include(sp => sp.CurrentProduct).Include(sp => sp.CurrentSupermarket).ToListAsync();
         }
 
         // GET: api/Supermarket_Product/5
@@ -78,6 +78,7 @@ namespace GreenProducts.Controllers
         [HttpPost]
         public async Task<ActionResult<Supermarket_Product>> PostSupermarket_Product(Supermarket_Product supermarket_Product)
         {
+            System.Diagnostics.Debug.WriteLine("super->" + supermarket_Product.SupermarketId + "price" + supermarket_Product.Price + "product->" + supermarket_Product.ProductId);
             _context.Supermarket_Products.Add(supermarket_Product);
             await _context.SaveChangesAsync();
 

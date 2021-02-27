@@ -12,9 +12,8 @@ namespace GreenProducts.Models
 
 
         [Required]
-        [Range(0.01, float.MaxValue)] // To not allow negative values
-        [RegularExpression(@"^\d+(,\d{1,2})?$")] // Maximum of 2 decimal points
-        public float Price { get; set; }
+        [StringLength(5, MinimumLength = 2, ErrorMessage = "Price must be between 2 and 5 characters")]
+        public String Price { get; set; }
 
         public int? SupermarketId { get; set; }
 

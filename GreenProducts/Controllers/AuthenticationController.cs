@@ -35,7 +35,6 @@ namespace MyProductsAPI.Controllers
         public async Task<IActionResult> Register([FromBody] Register model)
         {
             var userExists = await userManager.FindByNameAsync(model.UserName);
-
             if (userExists != null)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response
@@ -62,6 +61,14 @@ namespace MyProductsAPI.Controllers
                     Message = "There was an error creating the user, please try again."
                 });
             }
+
+            if (!await roleManager.RoleExistsAsync(UserRoles.User))
+            {
+                await roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+            }
+            await userManager.AddToRoleAsync(user, UserRoles.User);
+            
+
             return Ok(new Response
             {
                 Status = "Success",

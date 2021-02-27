@@ -2,18 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using GreenProducts.Data;
 using GreenProducts.Models;
-using System.Net.Http;
-using System.Net;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GreenProducts.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize]
     public class ProductsController : ControllerBase
     {
         private readonly GreenDbContext _context;
@@ -28,6 +27,24 @@ namespace GreenProducts.Controllers
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
             return await _context.Products.ToListAsync();
+        }
+
+        // GET: api/Products/producthints/{supermarket}/{search_string}
+        [HttpGet("producthints/{supermarket}/{search_string}")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts(string search_string, string supermarket)
+        {
+            Supermarket currentSupermarket = await _context.Supermarkets.Where(s=> s.Name == supermarket ).FirstAsync();
+            List<Product> matching_products = await _context.Products.Where(p => p.Name.Contains(search_string)).ToListAsync();
+            List<Product> matching_products_result = new List<Product>();
+            foreach (Product product in matching_products)
+            {
+                List<Supermarket_Product> sp_p = await _context.Supermarket_Products.Where(sp => sp.ProductId == product.Id).Where(sp => sp.SupermarketId == currentSupermarket.Id).ToListAsync();
+                if (sp_p.Count()> 0)
+                {
+                    matching_products_result.Add(product);
+                }
+            }
+            return matching_products;
         }
 
         // GET: api/Products/5
@@ -45,44 +62,38 @@ namespace GreenProducts.Controllers
         }
 
         // GET: api/Products/makegreen/1
-        
-        [HttpGet("{supermarket}/{id}/makegreen")]
-        public async Task<ActionResult<List<Product>>> GetGreenProduct(int id, String supermarket)
+        [HttpGet("{supermarket}/{product}/makegreen")]
+        public async Task<ActionResult<List<Product>>> GetGreenProduct(String product, String supermarket)
         {
-            var product = await _context.Products.FindAsync(id); // Produto passado no url
-
+            List<Product> get_product = await _context.Products.Where(p=> p.Name == product).ToListAsync(); // Produto passado no url
+            var current_product = get_product[0];
             var currentSupermarket = _context.Supermarkets.Where(s => s.Name.ToUpper() == supermarket.ToUpper()); // Supermercado escolhido na opção
 
-            if (product == null)
+            if (current_product == null)
             {
                 return NotFound();
             }
             
-            var product_impactId = product.ImpactId;
+            var product_impactId = current_product.ImpactId;
             var product_impact = await _context.ImpactCategories.FindAsync(product_impactId); // Impacto do produto em questão
             
-            var product_type = product.CategoryId;
-            var similarProducts = _context.Products.Where(sp => sp.CategoryId == product_type); // Produtos do mesmo género
-            
-            System.Diagnostics.Debug.WriteLine(supermarket);
+            var product_type = current_product.CategoryId;
+            List<Product> similarProducts = await _context.Products.Where(sp => sp.CategoryId == product_type).ToListAsync(); // Produtos do mesmo género
             List<Product> betterProducts = new List<Product>();
+            betterProducts.Add(current_product);
             
             foreach (Product similarProduct in similarProducts)
             {
-                var pId = similarProduct.Id;
-                if (pId != id)
+                if (similarProduct.Id != current_product.Id)
                 {
-                    var currentProduct = await _context.Products.FindAsync(pId);
-                    int currentProductImpactId = (int) currentProduct.ImpactId;
-                    var currentProductImpact = await _context.ImpactCategories.FindAsync(currentProductImpactId);
+                    ImpactCategory similarProductImpact = await _context.ImpactCategories.FindAsync(similarProduct.ImpactId);
 
-                    if(currentProductImpact.SeverityLevel < product_impact.SeverityLevel)
+                    if(similarProductImpact.SeverityLevel < product_impact.SeverityLevel)
                     {
-                        betterProducts.Add(currentProduct);
+                        betterProducts.Add(similarProduct);
                     }
                 }
             }
-            // replace-----> betterProducts[0] = betterProducts[1];
             return betterProducts;
         }
 
@@ -91,6 +102,7 @@ namespace GreenProducts.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProduct(int id, Product product)
         {
+
             if (id != product.Id)
             {
                 return BadRequest();
@@ -114,7 +126,7 @@ namespace GreenProducts.Controllers
                 }
             }
 
-            return NoContent();
+            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
         }
 
         // POST: api/Products
@@ -133,6 +145,7 @@ namespace GreenProducts.Controllers
         public async Task<IActionResult> DeleteProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
+
             if (product == null)
             {
                 return NotFound();

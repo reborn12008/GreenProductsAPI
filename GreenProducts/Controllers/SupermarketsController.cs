@@ -12,9 +12,9 @@ namespace GreenProducts.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class SupermarketsController : ControllerBase
-    {
+    { 
         private readonly GreenDbContext _context;
 
         public SupermarketsController(GreenDbContext context)
@@ -45,7 +45,7 @@ namespace GreenProducts.Controllers
 
         // PUT: api/Supermarkets/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = UserRoles.Admin)]
+        //[Authorize(Roles = UserRoles.Admin)]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSupermarket(int id, Supermarket supermarket)
         {
@@ -55,7 +55,7 @@ namespace GreenProducts.Controllers
             }
 
             _context.Entry(supermarket).State = EntityState.Modified;
-
+          
             try
             {
                 await _context.SaveChangesAsync();
@@ -77,7 +77,7 @@ namespace GreenProducts.Controllers
 
         // POST: api/Supermarkets
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = UserRoles.Admin)]
+        //[Authorize(Roles = UserRoles.Admin)]
         [HttpPost]
         public async Task<ActionResult<Supermarket>> PostSupermarket(Supermarket supermarket)
         {
@@ -88,7 +88,7 @@ namespace GreenProducts.Controllers
         }
 
         // DELETE: api/Supermarkets/5
-        [Authorize(Roles = UserRoles.Admin)]
+        //[Authorize(Roles = UserRoles.Admin)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSupermarket(int id)
         {

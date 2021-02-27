@@ -11,7 +11,7 @@ namespace GreenProducts.Models
         public int Id { get; set; }
 
         [Required]
-        [StringLength(20, MinimumLength = 2, ErrorMessage = "Supermarket name size must be between 2 and 20!")]
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "Product name size must be between 2 and 20!")]
         [RegularExpression(@"^[a-zA-Z''-'\s]{1,40}$", ErrorMessage = "This name contains characters that are not allowed.")]
         public String Name { get; set; }
 
